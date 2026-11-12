@@ -1,0 +1,1907 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Suivi des commandes - Pôle vente SNF</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root {
+      --mustard: #d4a017;
+      --mustard-dark: #b88408;
+      --app-bg: #000000;
+      --card: #211B10;
+      --border: #2a2a2a;
+      --txt: #f3f3f3;
+      --danger: #b91c1c;
+      --success: #15803d;
+      --warning: #b45309;
+      --gift: #7c3aed;
+      --online: #2563eb;
+      --return: #6b7280;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: "Segoe UI", Arial, sans-serif;
+      color: var(--txt);
+      background: var(--app-bg);
+    }
+
+    .container {
+      display: grid;
+      gap: 16px;
+      max-width: 1250px;
+      margin: 0 auto;
+    }
+
+    .card {
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--card);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+
+    .logo-box {
+      width: 90px;
+      height: 90px;
+      display: block;
+      flex-shrink: 0;
+      overflow: hidden;
+      border: 2px solid var(--mustard-dark);
+      border-radius: 12px;
+      background: #211B10;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    .logo-box:hover {
+      border-color: var(--mustard);
+      transform: scale(1.03);
+    }
+
+    .logo-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    h1 {
+      margin: 0;
+      color: var(--mustard);
+      font-size: 1.6rem;
+    }
+
+    .subtitle {
+      margin-top: 6px;
+      color: #cfcfcf;
+      font-size: 0.92rem;
+    }
+
+    .seller-pill {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 14px;
+      border: 1px solid var(--mustard-dark);
+      border-radius: 999px;
+      background: rgba(212, 160, 23, 0.1);
+      font-size: 0.9rem;
+    }
+
+    .seller-pill .avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      color: #111;
+      font-weight: 800;
+      background: linear-gradient(135deg, #f3c94f, var(--mustard-dark));
+      border: 2px solid var(--mustard);
+    }
+
+    .seller-pill .avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .seller-pill strong { color: var(--mustard); }
+
+    .seller-pill button {
+      padding: 5px 10px;
+      font-size: 0.8rem;
+      color: #fff;
+      background: #333;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field label {
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .field input,
+    .field select,
+    .field textarea {
+      width: 100%;
+      padding: 10px;
+      color: #fff;
+      font-family: inherit;
+      font-size: 0.95rem;
+      outline: none;
+      border: 1px solid #333;
+      border-radius: 8px;
+      background: #1c1c1c;
+    }
+
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus {
+      border-color: var(--mustard);
+      box-shadow: 0 0 0 3px rgba(212, 160, 23, 0.25);
+    }
+
+    .field input[readonly] {
+      color: var(--mustard);
+      font-weight: 700;
+      background: rgba(212, 160, 23, 0.08);
+      border-color: var(--mustard-dark);
+      cursor: not-allowed;
+    }
+
+    .span-2 { grid-column: span 2; }
+    .span-3 { grid-column: span 3; }
+    .span-6 { grid-column: span 6; }
+
+    .product-select-row {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    .product-controls-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      align-items: end;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .inline-help {
+      margin-top: 4px;
+      color: #bdbdbd;
+      font-size: 0.8rem;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    button {
+      padding: 10px 14px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      border-radius: 8px;
+      transition: 0.2s ease;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+
+    .btn-primary { color: #111; background: var(--mustard); }
+    .btn-primary:hover { color: #fff; background: var(--mustard-dark); }
+
+    .btn-secondary { color: #fff; background: #333; }
+    .btn-secondary:hover { background: #4a4a4a; }
+
+    .btn-danger { color: #fff; background: var(--danger); }
+    .btn-danger:hover { background: #991b1b; }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+    }
+
+    .summary .box {
+      padding: 10px;
+      border: 1px solid #2e2e2e;
+      border-radius: 10px;
+      background: #211B10;
+    }
+
+    .summary .box.offert { border-color: var(--gift); }
+    .summary .box.offert .value { color: #a78bfa; }
+
+    .summary .label {
+      color: #bdbdbd;
+      font-size: 0.85rem;
+    }
+
+    .summary .value {
+      margin-top: 5px;
+      color: var(--mustard);
+      font-size: 1.2rem;
+      font-weight: 800;
+    }
+
+    .table-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .table-head h2 {
+      margin: 0;
+      color: var(--mustard);
+      font-size: 1.3rem;
+    }
+
+    .table-wrapper {
+      overflow-x: auto;
+      overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
+      border: 1px solid #2f2f2f;
+      border-radius: 10px;
+    }
+
+    table {
+      width: 100%;
+      min-width: 1180px;
+      border-collapse: collapse;
+      background: #211B10;
+    }
+
+    thead { background: #2b2208; }
+
+    th, td {
+      padding: 10px;
+      color: #f0f0f0;
+      font-size: 0.92rem;
+      text-align: left;
+      vertical-align: top;
+      border-bottom: 1px solid #2a2a2a;
+    }
+
+    th { white-space: nowrap; }
+    td { overflow-wrap: anywhere; }
+
+    tr.clickable { cursor: pointer; transition: background 0.15s ease; }
+    tr.clickable:hover { background: rgba(212, 160, 23, 0.1); }
+
+    .order-count {
+      display: block;
+      margin-top: 3px;
+      color: var(--mustard);
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
+    .changes-count {
+      display: block;
+      margin-top: 4px;
+      color: #bdbdbd;
+      font-size: 0.72rem;
+    }
+
+    .seller-tag {
+      display: inline-block;
+      padding: 3px 9px;
+      color: var(--mustard);
+      font-size: 0.8rem;
+      font-weight: 700;
+      border: 1px solid var(--mustard-dark);
+      border-radius: 999px;
+      background: rgba(212, 160, 23, 0.1);
+      white-space: nowrap;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      color: #fff;
+      font-size: 0.8rem;
+      font-weight: 600;
+      white-space: nowrap;
+      border-radius: 999px;
+    }
+
+    .paid { background: var(--success); }
+    .partial { background: var(--warning); }
+    .unpaid { background: var(--danger); }
+    .gift { background: var(--gift); }
+    .online { background: var(--online); }
+    .return { background: var(--return); }
+
+    .history-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .history-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 12px 14px;
+      border: 1px solid #2e2e2e;
+      border-radius: 10px;
+      background: #211B10;
+    }
+
+    .hi-left {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .hi-date {
+      color: var(--mustard);
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
+    .hi-meta {
+      color: #bdbdbd;
+      font-size: 0.82rem;
+      overflow-wrap: anywhere;
+    }
+
+    .history-empty {
+      padding: 16px 0;
+      color: #bdbdbd;
+      font-size: 0.9rem;
+      text-align: center;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9998;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: rgba(0, 0, 0, 0.87);
+    }
+
+    .overlay.active { display: flex; }
+
+    .modal {
+      width: min(95%, 1100px);
+      max-height: 90vh;
+      overflow: auto;
+      padding: 22px;
+      border: 1px solid #333;
+      border-radius: 16px;
+      background: #211B10;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    }
+
+    .modal.edit-modal { width: min(95%, 640px); }
+
+    .modal h3 {
+      margin: 0 0 12px;
+      color: var(--mustard);
+    }
+
+    .modal h4 {
+      margin: 16px 0 8px;
+      color: var(--mustard);
+      font-size: 1rem;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .order-info {
+      padding: 10px 12px;
+      margin-bottom: 12px;
+      border: 1px solid #3a3020;
+      border-radius: 10px;
+      background: rgba(0, 0, 0, 0.25);
+      font-size: 0.9rem;
+      line-height: 1.5;
+      overflow-wrap: anywhere;
+    }
+
+    .edit-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .edit-error {
+      min-height: 18px;
+      margin: 8px 0 0;
+      color: #f87171;
+      font-size: 0.88rem;
+    }
+
+    .change-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .change-item {
+      padding: 9px 11px;
+      border: 1px solid #3a3020;
+      border-left: 3px solid var(--mustard);
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.25);
+      font-size: 0.86rem;
+      line-height: 1.5;
+    }
+
+    .change-date {
+      color: var(--mustard);
+      font-weight: 700;
+    }
+
+    .change-empty {
+      color: #bdbdbd;
+      font-size: 0.88rem;
+    }
+
+    .del-item {
+      padding: 9px 11px;
+      border: 1px solid #3a2020;
+      border-left: 3px solid var(--danger);
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.25);
+      font-size: 0.86rem;
+      line-height: 1.5;
+      overflow-wrap: anywhere;
+    }
+
+    #authOverlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.92);
+    }
+
+    .auth-box {
+      width: min(92%, 380px);
+      padding: 18px;
+      color: #fff;
+      border: 1px solid #333;
+      border-radius: 12px;
+      background: #211B10;
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
+    }
+
+    .auth-box h2 {
+      margin: 0 0 10px;
+      color: var(--mustard);
+    }
+
+    .auth-box p {
+      margin: 0 0 10px;
+      color: #cfcfcf;
+    }
+
+    .auth-box input {
+      width: 100%;
+      margin-bottom: 8px;
+      padding: 10px;
+      color: #fff;
+      outline: none;
+      border: 1px solid #444;
+      border-radius: 8px;
+      background: #1c1c1c;
+    }
+
+    .auth-box button {
+      width: 100%;
+      margin-top: 6px;
+      color: #111;
+      background: var(--mustard);
+    }
+
+    .auth-message {
+      min-height: 18px;
+      margin-top: 8px !important;
+      color: #f87171 !important;
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 950px) {
+      .grid { grid-template-columns: repeat(2, 1fr); }
+      .span-2, .span-3, .span-6 { grid-column: span 2; }
+      .summary { grid-template-columns: repeat(3, 1fr); }
+      .product-controls-row { grid-template-columns: 1fr; }
+      .logo-box { width: 70px; height: 70px; }
+      h1 { font-size: 1.2rem; }
+    }
+
+    @media (max-width: 600px) {
+      body { padding: 12px; }
+      .card { padding: 13px; border-radius: 11px; }
+      .header-left { align-items: center; flex-wrap: wrap; }
+      .seller-pill { margin-left: 0; width: 100%; }
+      .logo-box { width: 58px; height: 58px; }
+      h1 { font-size: 1.05rem; line-height: 1.25; }
+      .subtitle { font-size: 0.78rem; }
+
+      .grid { grid-template-columns: 1fr; }
+      .span-2, .span-3, .span-6 { grid-column: span 1; }
+      .edit-grid { grid-template-columns: 1fr; }
+
+      .summary { grid-template-columns: 1fr 1fr; gap: 7px; }
+      .summary .box { padding: 8px; }
+      .summary .label { font-size: 0.75rem; }
+      .summary .value { font-size: 1rem; }
+
+      .table-head { align-items: stretch; flex-direction: column; }
+      .table-head button { width: 100%; }
+
+      th, td { padding: 8px; font-size: 0.82rem; }
+
+      .history-item { align-items: stretch; flex-direction: column; }
+      .history-item button { width: 100%; }
+
+      .actions { flex-direction: column; }
+      .actions button { width: 100%; }
+
+      .modal { width: 96%; padding: 15px; }
+
+      .modal-actions { flex-direction: column; }
+      .modal-actions button { width: 100%; }
+    }
+
+    @media (max-width: 380px) {
+      .summary { grid-template-columns: 1fr; }
+      h1 { font-size: 0.98rem; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="authOverlay">
+    <div class="auth-box">
+      <h2>Connexion vendeur</h2>
+      <p>Connectez-vous pour accéder aux commandes partagées :</p>
+      <input id="authEmail" type="email" placeholder="E-mail" autocomplete="username" />
+      <input id="authPassword" type="password" placeholder="Mot de passe" autocomplete="current-password" />
+      <button id="unlockBtn">Se connecter</button>
+      <p id="authMsg" class="auth-message"></p>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <div class="card">
+      <div class="header-left">
+        <a href="Accueil_3_applis.html" class="logo-box">
+          <img src="logosopnaby.png" alt="Logo SNF" />
+        </a>
+
+        <div>
+          <h1>Suivi des commandes - Pôle vente SNF</h1>
+          <p class="subtitle">Ajouter et suivre toutes les commandes</p>
+        </div>
+
+        <div class="seller-pill" id="sellerPill">
+          <div class="avatar" id="sellerAvatar"></div>
+          <span>Vendeur connecté : <strong id="sellerName"></strong></span>
+          <button type="button" id="logoutBtn">Déconnexion</button>
+        </div>
+      </div>
+
+      <form id="clientForm">
+        <div class="grid">
+
+          <div class="field">
+            <label for="nom">Nom</label>
+            <input id="nom" required />
+          </div>
+
+          <div class="field">
+            <label for="prenom">Prénom</label>
+            <input id="prenom" required />
+          </div>
+
+          <div class="field">
+            <label for="numero">Numéro (identifiant client)</label>
+            <input id="numero" placeholder="+33..." required />
+          </div>
+
+          <div class="field span-3">
+            <label for="produitSelect">Produit</label>
+
+            <div class="product-select-row">
+              <select id="produitSelect"></select>
+            </div>
+
+            <div class="product-controls-row">
+              <input id="qteProduit" type="number" min="1" value="1" placeholder="Quantité" />
+              <input id="prixProduitAuto" type="number" step="0.01" min="0" placeholder="Prix unit." />
+              <button type="button" class="btn-primary" id="addProduitBtn">+ Ajouter</button>
+            </div>
+
+            <div class="inline-help">
+              Le prix unitaire se charge automatiquement, mais tu peux le modifier avant de l'ajouter.
+            </div>
+          </div>
+
+          <div class="field span-6">
+            <label for="produits">Produits sélectionnés</label>
+            <textarea id="produits" rows="2" placeholder="Ex : Miroir x2 (3,00 €) = 6,00 €..." required></textarea>
+          </div>
+
+          <div class="field">
+            <label for="prixTotal">Prix total</label>
+            <input id="prixTotal" type="number" min="0" step="0.01" required />
+          </div>
+
+          <div class="field">
+            <label for="dateAchat">Date</label>
+            <input id="dateAchat" type="date" required />
+          </div>
+
+          <div class="field">
+            <label for="statut">Statut</label>
+            <select id="statut" required>
+              <option value="Impayé">Impayé</option>
+              <option value="Payé en partie">Payé en partie</option>
+              <option value="Payé">Payé</option>
+              <option value="Cadeau">Cadeau</option>
+              <option value="Commande en ligne">Commande en ligne</option>
+              <option value="Retour">Retour</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="montantPaye">Montant payé</label>
+            <input id="montantPaye" type="number" min="0" step="0.01" value="0" required />
+          </div>
+
+          <div class="field">
+            <label for="ajoutePar">Ajouté par</label>
+            <input id="ajoutePar" readonly />
+          </div>
+
+          <div class="field span-3">
+            <label for="note">Note optionnelle</label>
+            <input id="note" placeholder="Détails supplémentaires..." />
+          </div>
+
+        </div>
+
+        <div class="actions">
+          <button type="submit" class="btn-primary" id="addBtn">Ajouter à la liste</button>
+          <button type="button" class="btn-danger" id="clearBtn">Tout effacer</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card">
+      <div class="summary">
+        <div class="box">
+          <div class="label">Clients (n° uniques)</div>
+          <div class="value" id="sumClients">0</div>
+        </div>
+
+        <div class="box">
+          <div class="label">Montant total</div>
+          <div class="value" id="sumTotal">0 €</div>
+        </div>
+
+        <div class="box">
+          <div class="label">Montant payé</div>
+          <div class="value" id="sumPaye">0 €</div>
+        </div>
+
+        <div class="box">
+          <div class="label">Reste à payer</div>
+          <div class="value" id="sumReste">0 €</div>
+        </div>
+
+        <div class="box offert">
+          <div class="label">🎁 Montant offert</div>
+          <div class="value" id="sumOffert">0 €</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="table-head">
+        <h2>Liste des commandes</h2>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button type="button" class="btn-secondary" id="refreshBtn">Actualiser</button>
+          <button type="button" class="btn-secondary" id="exportBtn">Exporter CSV</button>
+        </div>
+      </div>
+
+      <p class="subtitle" style="margin:0 0 10px">
+        Clique sur une commande pour modifier son statut et voir l'historique des changements.
+        <span id="lastUpdate"></span>
+      </p>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Nom</th>
+              <th>Prénom</th>
+              <th>Numéro</th>
+              <th>Produits</th>
+              <th>Prix total</th>
+              <th>Date</th>
+              <th>Statut</th>
+              <th>Montant payé</th>
+              <th>Reste</th>
+              <th>Note</th>
+              <th>Ajouté par</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="table-head">
+        <h2>Journal des suppressions</h2>
+      </div>
+      <p class="subtitle" style="margin:0 0 10px">
+        Chaque suppression est conservée ici avec le nom du vendeur.
+      </p>
+      <div class="change-list" id="deletionList"></div>
+    </div>
+
+    <div class="card">
+      <div class="table-head">
+        <h2>Historique des commandes</h2>
+        <button type="button" class="btn-secondary" id="snapshotNowBtn">
+          Créer un instantané maintenant
+        </button>
+      </div>
+
+      <p class="subtitle">
+        Une copie automatique est créée toutes les 24 heures lorsqu'il y a des commandes.
+      </p>
+
+      <div class="history-list" id="historyList"></div>
+    </div>
+
+  </div>
+
+  <!-- MODALE INSTANTANE -->
+  <div class="overlay" id="historyOverlay">
+    <div class="modal">
+      <h3 id="historyModalTitle">Historique</h3>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Nom</th>
+              <th>Prénom</th>
+              <th>Numéro</th>
+              <th>Produits</th>
+              <th>Prix total</th>
+              <th>Date</th>
+              <th>Statut</th>
+              <th>Montant payé</th>
+              <th>Reste</th>
+              <th>Note</th>
+              <th>Ajouté par</th>
+            </tr>
+          </thead>
+          <tbody id="historyModalBody"></tbody>
+        </table>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-danger" id="deleteHistoryBtn">Supprimer cet instantané</button>
+        <button type="button" class="btn-secondary" id="closeHistoryBtn">Fermer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODALE MODIFICATION COMMANDE -->
+  <div class="overlay" id="editOverlay">
+    <div class="modal edit-modal">
+      <h3>Modifier la commande</h3>
+
+      <div class="order-info" id="editInfo"></div>
+
+      <div class="edit-grid">
+        <div class="field">
+          <label for="editStatut">Nouveau statut</label>
+          <select id="editStatut">
+            <option value="Impayé">Impayé</option>
+            <option value="Payé en partie">Payé en partie</option>
+            <option value="Payé">Payé</option>
+            <option value="Cadeau">Cadeau</option>
+            <option value="Commande en ligne">Commande en ligne</option>
+            <option value="Retour">Retour</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="editPaye">Montant payé (€)</label>
+          <input id="editPaye" type="number" min="0" step="0.01" />
+        </div>
+
+        <div class="field">
+          <label for="editPar">Modifié par</label>
+          <input id="editPar" readonly />
+        </div>
+
+        <div class="field">
+          <label for="editMotif">Motif / remarque (optionnel)</label>
+          <input id="editMotif" placeholder="Ex : paiement en espèces..." />
+        </div>
+      </div>
+
+      <p class="edit-error" id="editError"></p>
+
+      <div class="modal-actions" style="margin-top:6px">
+        <button type="button" class="btn-secondary" id="closeEditBtn">Fermer</button>
+        <button type="button" class="btn-primary" id="saveEditBtn">Enregistrer la modification</button>
+      </div>
+
+      <h4>Historique des modifications</h4>
+      <div class="change-list" id="changeList"></div>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = "https://ayrptwjevpjarbgomkob.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_-AHDtKMzbvBKPTlF6pxwdg_ZVdILiwV";
+    const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    const PRODUCTS_KEY = "snf_products_priced_v3";
+    const SNAPSHOT_INTERVAL_MS = 24 * 60 * 60 * 1000;
+    const REFRESH_INTERVAL_MS = 30 * 1000;
+    const SELLER_KEY = "snf_seller_v1";
+
+    // Même liste que sur la page d'accueil (pour afficher la photo de l'avatar)
+    const SELLER_IMAGES = {
+      "Dior": "avatars/dior.png",
+      "Mamadou": "avatars/mamadou.png",
+      "Mouhamed": "avatars/mouhamed.png",
+      "Saer": "avatars/saer.png",
+      "Awa": "avatars/awa.png",
+      "Arame": "avatars/arame.png",
+      "Ndiare": "avatars/ndiare.png",
+      "Landing": "avatars/landing.png",
+      "Dado": "avatars/dado.png",
+      "Ro": "avatars/ro.png",
+      "Sophie": "avatars/sophie.png",
+      "Makhtar": "avatars/makhtar.png",
+      "Zahra": "avatars/zahra.png",
+      "Mansour": "avatars/mansour.png",
+    };
+
+    // Vendeur choisi sur l'accueil : sinon retour à l'accueil
+    const currentSeller = sessionStorage.getItem(SELLER_KEY) || "";
+    if (!currentSeller) {
+      alert("Veuillez d'abord vous connecter depuis l'accueil et choisir votre avatar.");
+      window.location.href = "Accueil_3_applis.html";
+    }
+
+    const form = document.getElementById("clientForm");
+    const tableBody = document.getElementById("tableBody");
+    const exportBtn = document.getElementById("exportBtn");
+    const clearBtn = document.getElementById("clearBtn");
+    const refreshBtn = document.getElementById("refreshBtn");
+    const addBtn = document.getElementById("addBtn");
+    const lastUpdate = document.getElementById("lastUpdate");
+
+    const produitSelect = document.getElementById("produitSelect");
+    const qteProduit = document.getElementById("qteProduit");
+    const prixProduitAuto = document.getElementById("prixProduitAuto");
+    const addProduitBtn = document.getElementById("addProduitBtn");
+    const produitsArea = document.getElementById("produits");
+
+    const historyList = document.getElementById("historyList");
+    const snapshotNowBtn = document.getElementById("snapshotNowBtn");
+    const deletionList = document.getElementById("deletionList");
+
+    const historyOverlay = document.getElementById("historyOverlay");
+    const historyModalTitle = document.getElementById("historyModalTitle");
+    const historyModalBody = document.getElementById("historyModalBody");
+    const closeHistoryBtn = document.getElementById("closeHistoryBtn");
+    const deleteHistoryBtn = document.getElementById("deleteHistoryBtn");
+
+    const editOverlay = document.getElementById("editOverlay");
+    const editInfo = document.getElementById("editInfo");
+    const editStatut = document.getElementById("editStatut");
+    const editPaye = document.getElementById("editPaye");
+    const editPar = document.getElementById("editPar");
+    const editMotif = document.getElementById("editMotif");
+    const editError = document.getElementById("editError");
+    const changeList = document.getElementById("changeList");
+    const saveEditBtn = document.getElementById("saveEditBtn");
+    const closeEditBtn = document.getElementById("closeEditBtn");
+
+    const fields = {
+      nom: document.getElementById("nom"),
+      prenom: document.getElementById("prenom"),
+      numero: document.getElementById("numero"),
+      produits: produitsArea,
+      prixTotal: document.getElementById("prixTotal"),
+      dateAchat: document.getElementById("dateAchat"),
+      statut: document.getElementById("statut"),
+      montantPaye: document.getElementById("montantPaye"),
+      ajoutePar: document.getElementById("ajoutePar"),
+      note: document.getElementById("note")
+    };
+
+    const summary = {
+      clients: document.getElementById("sumClients"),
+      total: document.getElementById("sumTotal"),
+      paye: document.getElementById("sumPaye"),
+      reste: document.getElementById("sumReste"),
+      offert: document.getElementById("sumOffert")
+    };
+
+    let products = JSON.parse(localStorage.getItem(PRODUCTS_KEY) || "null") || [
+      { name: "Miroir", price: 3 },
+      { name: "Marque page", price: 5 },
+      { name: "Ventilateur Dayane", price: 15 },
+      { name: "Mug Bleu", price: 15 },
+      { name: "Mug Mahabba", price: 15 },
+      { name: "Mug Istiqama", price: 15 },
+      { name: "Mug Jaune", price: 15 },
+      { name: "Boutons (paire)", price: 10 },
+      { name: "Eventail", price: 7 },
+      { name: "Gourde Orange", price: 20 },
+      { name: "Gourde Blanche", price: 20 }
+    ];
+
+    let records = [];
+    let history = [];
+    let deletions = [];
+
+    let cartLines = [];
+    let currentHistoryIndex = null;
+    let currentEditIndex = null;
+    let refreshTimer = null;
+    let loggedIn = false;
+
+    function esc(value) {
+      return String(value == null ? "" : value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function formatMoney(value) {
+      return new Intl.NumberFormat("fr-FR", {
+        style: "currency",
+        currency: "EUR"
+      }).format(Number(value) || 0);
+    }
+
+    function sellerTag(name) {
+      return name ? `<span class="seller-tag">👤 ${esc(name)}</span>` : "—";
+    }
+
+    function normalizePhone(value) {
+      let phone = String(value || "").replace(/[\s.\-()]/g, "");
+      if (phone.startsWith("00")) phone = "+" + phone.slice(2);
+      if (/^0\d{9}$/.test(phone)) phone = "+33" + phone.slice(1);
+      return phone;
+    }
+
+    function countOrdersByPhone(list) {
+      const counts = {};
+      list.forEach(function (record) {
+        const key = normalizePhone(record.numero);
+        counts[key] = (counts[key] || 0) + 1;
+      });
+      return counts;
+    }
+
+    function computeAmounts(record) {
+      const total = Number(record.prixTotal) || 0;
+      const isGift = record.statut === "Cadeau";
+      const isOnline = record.statut === "Commande en ligne";
+      const isReturn = record.statut === "Retour";
+
+      if (isGift || isReturn) {
+        return { total, paid: 0, remaining: 0, offered: isGift ? total : 0 };
+      }
+
+      const paid = Number(record.montantPaye) || 0;
+      const remaining = isOnline ? total : Math.max(0, total - paid);
+
+      return { total, paid, remaining, offered: 0 };
+    }
+
+    function formatDateTime(timestamp) {
+      const date = new Date(timestamp);
+      return date.toLocaleString("fr-FR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    }
+
+    function failed(result, message) {
+      if (result && result.error) {
+        console.error(message, result.error);
+        alert(message + "\n" + result.error.message);
+        return true;
+      }
+      return false;
+    }
+
+    /* ===== MAPPING BASE <-> APPLICATION ===== */
+
+    function fromRow(row) {
+      return {
+        id: row.id,
+        nom: row.nom,
+        prenom: row.prenom,
+        numero: row.numero,
+        email: row.email || "",
+        adresse: row.adresse || "",
+        produits: row.produits,
+        prixTotal: Number(row.prix_total) || 0,
+        dateAchat: row.date_achat,
+        statut: row.statut,
+        montantPaye: Number(row.montant_paye) || 0,
+        note: row.note || "",
+        addedBy: row.cree_par || "",
+        changes: []
+      };
+    }
+
+    async function loadAll() {
+      const results = await Promise.all([
+        db.from("commandes").select("*").order("cree_le", { ascending: false }),
+        db.from("historique_modifications").select("*").order("cree_le", { ascending: false }),
+        db.from("journal_suppressions").select("*").order("cree_le", { ascending: false }).limit(200),
+        db.from("instantanes").select("*").order("cree_le", { ascending: true })
+      ]);
+
+      for (const result of results) {
+        if (result.error) {
+          console.error(result.error);
+          lastUpdate.textContent = "⚠️ Erreur de chargement : " + result.error.message;
+          return false;
+        }
+      }
+
+      records = results[0].data.map(fromRow);
+
+      const byId = {};
+      records.forEach(function (record) { byId[record.id] = record; });
+
+      results[1].data.forEach(function (change) {
+        const record = byId[change.commande_id];
+        if (!record) return;
+        record.changes.push({
+          date: change.cree_le,
+          oldStatut: change.ancien_statut,
+          newStatut: change.nouveau_statut,
+          oldPaye: Number(change.ancien_paye) || 0,
+          newPaye: Number(change.nouveau_paye) || 0,
+          motif: change.motif || "",
+          modifiedBy: change.modifie_par || ""
+        });
+      });
+
+      deletions = results[2].data.map(function (d) {
+        return {
+          date: d.cree_le,
+          by: d.supprime_par,
+          action: d.action,
+          nom: d.nom,
+          prenom: d.prenom,
+          numero: d.numero,
+          produits: d.produits,
+          total: Number(d.total) || 0,
+          statut: d.statut,
+          addedBy: d.ajoute_par
+        };
+      });
+
+      history = results[3].data.map(function (s) {
+        return { id: s.id, timestamp: s.cree_le, by: s.cree_par, records: s.donnees || [] };
+      });
+
+      lastUpdate.textContent = "Dernière mise à jour : " + new Date().toLocaleTimeString("fr-FR");
+      return true;
+    }
+
+    async function reloadAndRender() {
+      const ok = await loadAll();
+      if (!ok) return;
+      render();
+      renderDeletions();
+      renderHistoryList();
+    }
+
+    /* ===== VENDEUR ===== */
+
+    function setupSeller() {
+      document.getElementById("sellerName").textContent = currentSeller;
+      fields.ajoutePar.value = currentSeller;
+      editPar.value = currentSeller;
+
+      const avatar = document.getElementById("sellerAvatar");
+      const src = SELLER_IMAGES[currentSeller];
+
+      if (src) {
+        const img = document.createElement("img");
+        img.src = src;
+        img.alt = currentSeller;
+        img.addEventListener("error", function () {
+          avatar.textContent = currentSeller.charAt(0).toUpperCase();
+        });
+        avatar.appendChild(img);
+      } else {
+        avatar.textContent = currentSeller.charAt(0).toUpperCase();
+      }
+    }
+
+    function deletionRow(action, record) {
+      return {
+        action: action,
+        nom: record.nom,
+        prenom: record.prenom,
+        numero: record.numero,
+        produits: record.produits,
+        total: Number(record.prixTotal) || 0,
+        statut: record.statut,
+        ajoute_par: record.addedBy || "",
+        supprime_par: currentSeller
+      };
+    }
+
+    function renderDeletions() {
+      if (deletions.length === 0) {
+        deletionList.innerHTML = `<div class="change-empty">Aucune suppression.</div>`;
+        return;
+      }
+
+      deletionList.innerHTML = deletions.map(function (d) {
+        return `
+          <div class="del-item">
+            <span class="change-date">📅 ${formatDateTime(d.date)}</span>
+            - ${sellerTag(d.by)} - <strong>${esc(d.action)}</strong><br>
+            ${esc(d.nom)} ${esc(d.prenom)} (${esc(d.numero)}) - ${formatMoney(d.total)} - ${esc(d.statut)}<br>
+            ${esc(d.produits)}${d.addedBy ? "<br>Ajoutée à l'origine par : " + esc(d.addedBy) : ""}
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderProductsSelect() {
+      produitSelect.innerHTML = `<option value="">-- Choisir un produit --</option>`;
+      products.forEach(function (product, index) {
+        const option = document.createElement("option");
+        option.value = index;
+        option.textContent = `${product.name} (${formatMoney(product.price)})`;
+        produitSelect.appendChild(option);
+      });
+    }
+
+    function updateAutoPriceFromSelect() {
+      const index = produitSelect.value;
+      if (index === "") {
+        prixProduitAuto.value = "";
+        return;
+      }
+      const product = products[Number(index)];
+      prixProduitAuto.value = Number(product.price).toFixed(2);
+    }
+
+    function recalcTicketTotal() {
+      const total = cartLines.reduce(function (sum, line) {
+        return sum + line.totalLine;
+      }, 0);
+
+      fields.prixTotal.value = total.toFixed(2);
+      fields.produits.value = cartLines
+        .map(function (line) {
+          return `${line.name} x${line.qty} (${Number(line.unitPrice).toFixed(2)}€) = ${Number(line.totalLine).toFixed(2)}€`;
+        })
+        .join(", ");
+    }
+
+    produitSelect.addEventListener("change", updateAutoPriceFromSelect);
+
+    addProduitBtn.addEventListener("click", function () {
+      if (produitSelect.value === "") {
+        alert("Choisis d'abord un produit.");
+        return;
+      }
+
+      const index = Number(produitSelect.value);
+      const product = products[index];
+      const quantity = Math.max(1, Number(qteProduit.value || 1));
+      const unitPrice = Math.max(0, Number(prixProduitAuto.value || product.price));
+      const totalLine = quantity * unitPrice;
+
+      cartLines.push({
+        name: product.name,
+        qty: quantity,
+        unitPrice: unitPrice,
+        totalLine: totalLine
+      });
+
+      recalcTicketTotal();
+      qteProduit.value = 1;
+      produitSelect.value = "";
+      prixProduitAuto.value = "";
+    });
+
+    function badgeClass(status) {
+      if (status === "Payé") return "paid";
+      if (status === "Payé en partie") return "partial";
+      if (status === "Cadeau") return "gift";
+      if (status === "Commande en ligne") return "online";
+      if (status === "Retour") return "return";
+      return "unpaid";
+    }
+
+    function normalizeStatus(total, paid, chosenStatus) {
+      if (chosenStatus === "Commande en ligne") return "Commande en ligne";
+      if (chosenStatus === "Cadeau") return "Cadeau";
+      if (chosenStatus === "Retour") return "Retour";
+      if (paid <= 0) return "Impayé";
+      if (paid >= total) return "Payé";
+      if (chosenStatus === "Payé") return "Payé en partie";
+      return chosenStatus;
+    }
+
+    function render() {
+      tableBody.innerHTML = "";
+
+      let totalAll = 0;
+      let paidAll = 0;
+      let restAll = 0;
+      let offeredAll = 0;
+
+      const orderCounts = countOrdersByPhone(records);
+
+      records.forEach(function (record, index) {
+        const amounts = computeAmounts(record);
+
+        totalAll += amounts.total;
+        paidAll += amounts.paid;
+        restAll += amounts.remaining;
+        offeredAll += amounts.offered;
+
+        const phoneKey = normalizePhone(record.numero);
+        const nbOrders = orderCounts[phoneKey] || 1;
+        const orderCountHtml = nbOrders > 1 ? `<span class="order-count">${nbOrders} commandes</span>` : "";
+
+        const nbChanges = record.changes.length;
+        const changesHtml = nbChanges > 0
+          ? `<span class="changes-count">${nbChanges} modification(s)</span>`
+          : "";
+
+        const row = document.createElement("tr");
+        row.className = "clickable";
+        row.dataset.rowIndex = index;
+        row.innerHTML = `
+          <td>${esc(record.nom)}</td>
+          <td>${esc(record.prenom)}</td>
+          <td>${esc(record.numero)}${orderCountHtml}</td>
+          <td>${esc(record.produits)}</td>
+          <td>${formatMoney(amounts.total)}</td>
+          <td>${esc(record.dateAchat)}</td>
+          <td><span class="badge ${badgeClass(record.statut)}">${esc(record.statut)}</span>${changesHtml}</td>
+          <td>${formatMoney(amounts.paid)}</td>
+          <td>${formatMoney(amounts.remaining)}</td>
+          <td>${esc(record.note || "")}</td>
+          <td>${record.addedBy ? sellerTag(record.addedBy) : '<span class="seller-tag">🌐 Client en ligne</span>'}</td>
+          <td><button type="button" class="btn-danger" data-index="${index}">Supprimer</button></td>
+        `;
+        tableBody.appendChild(row);
+      });
+
+      summary.clients.textContent = Object.keys(orderCounts).length;
+      summary.total.textContent = formatMoney(totalAll);
+      summary.paye.textContent = formatMoney(paidAll);
+      summary.reste.textContent = formatMoney(restAll);
+      summary.offert.textContent = formatMoney(offeredAll);
+    }
+
+    tableBody.addEventListener("click", async function (event) {
+      const deleteButton = event.target.closest("button[data-index]");
+
+      if (deleteButton) {
+        const index = Number(deleteButton.dataset.index);
+        const record = records[index];
+        if (!record) return;
+
+        if (!confirm("Supprimer cette commande ?")) return;
+
+        const logResult = await db.from("journal_suppressions").insert(deletionRow("Commande supprimée", record));
+        if (failed(logResult, "Impossible d'enregistrer la suppression.")) return;
+
+        const delResult = await db.from("commandes").delete().eq("id", record.id);
+        if (failed(delResult, "Suppression impossible.")) return;
+
+        await reloadAndRender();
+        return;
+      }
+
+      const row = event.target.closest("tr[data-row-index]");
+      if (row) openEditModal(Number(row.dataset.rowIndex));
+    });
+
+    function renderChangeList(record) {
+      const changes = record.changes || [];
+
+      if (changes.length === 0) {
+        changeList.innerHTML = `<div class="change-empty">Aucune modification pour le moment.</div>`;
+        return;
+      }
+
+      changeList.innerHTML = changes.map(function (change) {
+        const statusPart = change.oldStatut === change.newStatut
+          ? `Statut : ${esc(change.newStatut)} (inchangé)`
+          : `Statut : <strong>${esc(change.oldStatut)}</strong> → <strong>${esc(change.newStatut)}</strong>`;
+
+        const paidPart = `Payé : ${formatMoney(change.oldPaye)} → ${formatMoney(change.newPaye)}`;
+        const motifPart = change.motif ? `<br>💬 ${esc(change.motif)}` : "";
+        const byPart = change.modifiedBy ? `<br>👤 Par : <strong>${esc(change.modifiedBy)}</strong>` : "";
+
+        return `
+          <div class="change-item">
+            <span class="change-date">📅 ${formatDateTime(change.date)}</span><br>
+            ${statusPart}<br>
+            ${paidPart}${byPart}${motifPart}
+          </div>
+        `;
+      }).join("");
+    }
+
+    function openEditModal(index) {
+      const record = records[index];
+      if (!record) return;
+
+      currentEditIndex = index;
+      const amounts = computeAmounts(record);
+
+      editInfo.innerHTML = `
+        <strong>${esc(record.nom)} ${esc(record.prenom)}</strong> - ${esc(record.numero)}<br>
+        ${record.email ? esc(record.email) + "<br>" : ""}
+        ${record.adresse ? esc(record.adresse) + "<br>" : ""}
+        ${esc(record.produits)}<br>
+        Total : <strong>${formatMoney(amounts.total)}</strong> - Date : ${esc(record.dateAchat)}<br>
+        Statut actuel : <span class="badge ${badgeClass(record.statut)}">${esc(record.statut)}</span><br>
+        Ajoutée par : ${record.addedBy ? sellerTag(record.addedBy) : "Client en ligne"}
+      `;
+
+      editStatut.value = record.statut;
+      editPaye.value = Number(record.montantPaye || 0).toFixed(2);
+      editPar.value = currentSeller;
+      editMotif.value = "";
+      editError.textContent = "";
+
+      renderChangeList(record);
+      editOverlay.classList.add("active");
+    }
+
+    function closeEditModal() {
+      editOverlay.classList.remove("active");
+      currentEditIndex = null;
+    }
+
+    editStatut.addEventListener("change", function () {
+      const record = records[currentEditIndex];
+      if (!record) return;
+
+      const total = Number(record.prixTotal) || 0;
+
+      if (editStatut.value === "Payé") editPaye.value = total.toFixed(2);
+      if (editStatut.value === "Impayé") editPaye.value = "0.00";
+      if (editStatut.value === "Cadeau" || editStatut.value === "Commande en ligne" || editStatut.value === "Retour") {
+        editPaye.value = "0.00";
+      }
+    });
+
+    saveEditBtn.addEventListener("click", async function () {
+      const record = records[currentEditIndex];
+      if (!record) return;
+
+      const total = Number(record.prixTotal) || 0;
+      let paid = Number(editPaye.value) || 0;
+
+      if (paid < 0) paid = 0;
+      if (paid > total) paid = total;
+
+      const newStatus = normalizeStatus(total, paid, editStatut.value);
+      if (newStatus === "Cadeau" || newStatus === "Commande en ligne" || newStatus === "Retour") paid = 0;
+
+      const oldStatus = record.statut;
+      const oldPaid = Number(record.montantPaye) || 0;
+
+      if (newStatus === oldStatus && paid === oldPaid) {
+        editError.textContent = "Aucun changement à enregistrer.";
+        return;
+      }
+
+      saveEditBtn.disabled = true;
+
+      const updateResult = await db.from("commandes").update({
+        statut: newStatus,
+        montant_paye: paid,
+        modifie_par: currentSeller,
+        modifie_le: new Date().toISOString()
+      }).eq("id", record.id);
+
+      if (updateResult.error) {
+        editError.textContent = "Erreur : " + updateResult.error.message;
+        saveEditBtn.disabled = false;
+        return;
+      }
+
+      const logResult = await db.from("historique_modifications").insert({
+        commande_id: record.id,
+        ancien_statut: oldStatus,
+        nouveau_statut: newStatus,
+        ancien_paye: oldPaid,
+        nouveau_paye: paid,
+        motif: editMotif.value.trim(),
+        modifie_par: currentSeller
+      });
+
+      saveEditBtn.disabled = false;
+      if (logResult.error) console.error(logResult.error);
+
+      closeEditModal();
+      await reloadAndRender();
+      alert("✅ Modification enregistrée par " + currentSeller + ".");
+    });
+
+    closeEditBtn.addEventListener("click", closeEditModal);
+
+    editOverlay.addEventListener("click", function (event) {
+      if (event.target === editOverlay) closeEditModal();
+    });
+
+    form.addEventListener("submit", async function (event) {
+      event.preventDefault();
+
+      const total = Number(fields.prixTotal.value) || 0;
+      let paid = Number(fields.montantPaye.value) || 0;
+
+      if (paid < 0) paid = 0;
+      if (paid > total) paid = total;
+
+      const status = normalizeStatus(total, paid, fields.statut.value);
+      if (status === "Cadeau" || status === "Commande en ligne" || status === "Retour") paid = 0;
+
+      const entry = {
+        nom: fields.nom.value.trim(),
+        prenom: fields.prenom.value.trim(),
+        numero: fields.numero.value.trim(),
+        produits: fields.produits.value.trim(),
+        prix_total: total,
+        date_achat: fields.dateAchat.value,
+        statut: status,
+        montant_paye: paid,
+        note: fields.note.value.trim(),
+        cree_par: currentSeller
+      };
+
+      const newPhoneKey = normalizePhone(entry.numero);
+      const existingCount = records.filter(function (record) {
+        return normalizePhone(record.numero) === newPhoneKey;
+      }).length;
+
+      addBtn.disabled = true;
+      const result = await db.from("commandes").insert(entry);
+      addBtn.disabled = false;
+
+      if (failed(result, "Commande non enregistrée.")) return;
+
+      form.reset();
+      fields.montantPaye.value = 0;
+      fields.statut.value = "Impayé";
+      fields.dateAchat.valueAsDate = new Date();
+      fields.ajoutePar.value = currentSeller;
+      qteProduit.value = 1;
+      prixProduitAuto.value = "";
+      cartLines = [];
+      fields.prixTotal.value = "";
+
+      await reloadAndRender();
+
+      if (existingCount > 0) {
+        alert("✅ Commande ajoutée par " + currentSeller + ".\nCe numéro existe déjà : c'est un client existant (" + (existingCount + 1) + " commandes au total).");
+      } else {
+        alert("✅ Commande ajoutée par " + currentSeller + " (nouveau client).");
+      }
+    });
+
+    function renderHistoryList() {
+      historyList.innerHTML = "";
+
+      if (history.length === 0) {
+        historyList.innerHTML = `<div class="history-empty">Aucun instantané pour le moment.</div>`;
+        return;
+      }
+
+      const reversedHistory = history.map(function (snapshot, index) {
+        return { snapshot: snapshot, index: index };
+      }).reverse();
+
+      reversedHistory.forEach(function (item) {
+        const snapshot = item.snapshot;
+        const realIndex = item.index;
+        let snapshotTotal = 0;
+
+        snapshot.records.forEach(function (record) {
+          snapshotTotal += Number(record.prixTotal) || 0;
+        });
+
+        const snapshotClients = Object.keys(countOrdersByPhone(snapshot.records)).length;
+
+        const historyItem = document.createElement("div");
+        historyItem.className = "history-item";
+        historyItem.innerHTML = `
+          <div class="hi-left">
+            <div class="hi-date">📅 ${formatDateTime(snapshot.timestamp)}</div>
+            <div class="hi-meta">
+              ${snapshot.records.length} commande(s)
+              - ${snapshotClients} client(s)
+              - Total : ${formatMoney(snapshotTotal)}
+              ${snapshot.by ? "- Créé par : " + esc(snapshot.by) : ""}
+            </div>
+          </div>
+          <button type="button" class="btn-secondary" data-history-index="${realIndex}">
+            Voir le détail
+          </button>
+        `;
+        historyList.appendChild(historyItem);
+      });
+
+      historyList.querySelectorAll("button[data-history-index]").forEach(function (button) {
+        button.addEventListener("click", function () {
+          openHistoryModal(Number(button.dataset.historyIndex));
+        });
+      });
+    }
+
+    function renderRowsInto(tableBodyElement, list) {
+      tableBodyElement.innerHTML = "";
+
+      if (list.length === 0) {
+        tableBodyElement.innerHTML = `
+          <tr>
+            <td colspan="11" style="text-align:center;">
+              Aucune commande dans cet instantané.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      const orderCounts = countOrdersByPhone(list);
+
+      list.forEach(function (record) {
+        const amounts = computeAmounts(record);
+        const nbOrders = orderCounts[normalizePhone(record.numero)] || 1;
+        const orderCountHtml = nbOrders > 1 ? `<span class="order-count">${nbOrders} commandes</span>` : "";
+
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${esc(record.nom)}</td>
+          <td>${esc(record.prenom)}</td>
+          <td>${esc(record.numero)}${orderCountHtml}</td>
+          <td>${esc(record.produits)}</td>
+          <td>${formatMoney(amounts.total)}</td>
+          <td>${esc(record.dateAchat)}</td>
+          <td><span class="badge ${badgeClass(record.statut)}">${esc(record.statut)}</span></td>
+          <td>${formatMoney(amounts.paid)}</td>
+          <td>${formatMoney(amounts.remaining)}</td>
+          <td>${esc(record.note || "")}</td>
+          <td>${sellerTag(record.addedBy)}</td>
+        `;
+        tableBodyElement.appendChild(row);
+      });
+    }
+
+    function openHistoryModal(index) {
+      const snapshot = history[index];
+      if (!snapshot) return;
+
+      currentHistoryIndex = index;
+      historyModalTitle.textContent = `Historique du ${formatDateTime(snapshot.timestamp)}`;
+      renderRowsInto(historyModalBody, snapshot.records);
+      historyOverlay.classList.add("active");
+    }
+
+    function closeHistoryModal() {
+      historyOverlay.classList.remove("active");
+      currentHistoryIndex = null;
+    }
+
+    async function takeSnapshot() {
+      const copy = records.map(function (record) {
+        const clone = Object.assign({}, record);
+        delete clone.changes;
+        return clone;
+      });
+
+      const result = await db.from("instantanes").insert({
+        cree_par: currentSeller,
+        donnees: copy
+      });
+
+      if (failed(result, "Instantané non enregistré.")) return false;
+
+      await reloadAndRender();
+      return true;
+    }
+
+    // La date du dernier instantané vient de la base : partagée entre appareils
+    async function checkAutoSnapshot() {
+      if (!loggedIn || records.length === 0) return;
+
+      const last = history.length ? new Date(history[history.length - 1].timestamp).getTime() : 0;
+      if (!last || Date.now() - last >= SNAPSHOT_INTERVAL_MS) {
+        await takeSnapshot();
+      }
+    }
+
+    closeHistoryBtn.addEventListener("click", closeHistoryModal);
+
+    historyOverlay.addEventListener("click", function (event) {
+      if (event.target === historyOverlay) closeHistoryModal();
+    });
+
+    deleteHistoryBtn.addEventListener("click", async function () {
+      if (currentHistoryIndex === null) return;
+      if (!confirm("Supprimer cet instantané de l'historique ?")) return;
+
+      const snap = history[currentHistoryIndex];
+
+      const logResult = await db.from("journal_suppressions").insert({
+        action: "Instantané supprimé (" + formatDateTime(snap.timestamp) + ")",
+        nom: "-",
+        prenom: "",
+        numero: "-",
+        produits: snap.records.length + " commande(s) dans l'instantané",
+        total: 0,
+        statut: "-",
+        ajoute_par: "",
+        supprime_par: currentSeller
+      });
+      if (failed(logResult, "Impossible d'enregistrer la suppression.")) return;
+
+      const delResult = await db.from("instantanes").delete().eq("id", snap.id);
+      if (failed(delResult, "Suppression impossible.")) return;
+
+      closeHistoryModal();
+      await reloadAndRender();
+    });
+
+    snapshotNowBtn.addEventListener("click", async function () {
+      if (records.length === 0) {
+        alert("Aucune commande à sauvegarder pour le moment.");
+        return;
+      }
+
+      if (await takeSnapshot()) alert("✅ Instantané créé avec succès.");
+    });
+
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape") {
+        closeEditModal();
+        closeHistoryModal();
+      }
+    });
+
+    refreshBtn.addEventListener("click", reloadAndRender);
+
+    exportBtn.addEventListener("click", function () {
+      if (!records.length) {
+        alert("Aucune donnée à exporter.");
+        return;
+      }
+
+      function safe(value) {
+        let text = String(value);
+        if (/^[=+\-@]/.test(text)) text = "'" + text;
+        return `"${text.replace(/"/g, '""')}"`;
+      }
+
+      const headers = [
+        "Nom", "Prénom", "Numéro", "E-mail", "Adresse", "Produits", "Prix total",
+        "Date", "Statut", "Montant payé", "Reste", "Note", "Ajouté par"
+      ];
+
+      const lines = [headers.join(",")];
+
+      records.forEach(function (record) {
+        const amounts = computeAmounts(record);
+        const row = [
+          record.nom,
+          record.prenom,
+          record.numero,
+          record.email,
+          record.adresse,
+          record.produits,
+          amounts.total,
+          record.dateAchat,
+          record.statut,
+          amounts.paid,
+          amounts.remaining,
+          record.note || "",
+          record.addedBy || "Client en ligne"
+        ].map(safe);
+        lines.push(row.join(","));
+      });
+
+      const csv = "\uFEFF" + lines.join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download = `suivi_commandes_snf_${new Date().toISOString().slice(0, 10)}.csv`;
+      link.click();
+
+      setTimeout(function () {
+        URL.revokeObjectURL(url);
+      }, 1000);
+    });
+
+    clearBtn.addEventListener("click", async function () {
+      if (!records.length) {
+        alert("Aucune commande à effacer.");
+        return;
+      }
+      if (!confirm("Voulez-vous vraiment supprimer toutes les commandes actuelles ?")) return;
+      if (!confirm("Dernière confirmation : cette action concerne tous les vendeurs. Continuer ?")) return;
+
+      const logResult = await db.from("journal_suppressions").insert(
+        records.map(function (record) { return deletionRow("Effacement total", record); })
+      );
+      if (failed(logResult, "Impossible d'enregistrer le journal.")) return;
+
+      const ids = records.map(function (record) { return record.id; });
+      const delResult = await db.from("commandes").delete().in("id", ids);
+      if (failed(delResult, "Effacement impossible.")) return;
+
+      await reloadAndRender();
+    });
+
+    /* ===== AUTHENTIFICATION SUPABASE ===== */
+
+    const authOverlay = document.getElementById("authOverlay");
+    const authEmail = document.getElementById("authEmail");
+    const authPassword = document.getElementById("authPassword");
+    const authMsg = document.getElementById("authMsg");
+    const unlockBtn = document.getElementById("unlockBtn");
+
+    async function startApp() {
+      loggedIn = true;
+      authOverlay.style.display = "none";
+      await reloadAndRender();
+      await checkAutoSnapshot();
+
+      clearInterval(refreshTimer);
+      refreshTimer = setInterval(function () {
+        const busy = editOverlay.classList.contains("active") || historyOverlay.classList.contains("active");
+        if (!busy) reloadAndRender().then(checkAutoSnapshot);
+      }, REFRESH_INTERVAL_MS);
+    }
+
+    async function tryLogin() {
+      authMsg.textContent = "";
+      unlockBtn.disabled = true;
+
+      try {
+        const result = await db.auth.signInWithPassword({
+          email: authEmail.value.trim(),
+          password: authPassword.value
+        });
+
+        if (result.error) {
+          authMsg.textContent = "Erreur : " + result.error.message;
+          console.error(result.error);
+          return;
+        }
+
+        authPassword.value = "";
+        startApp();
+      } catch (e) {
+        authMsg.textContent = "Erreur JS : " + e.message;
+        console.error(e);
+      } finally {
+        unlockBtn.disabled = false;
+      }
+    }
+
+    unlockBtn.addEventListener("click", tryLogin);
+    authPassword.addEventListener("keydown", function (event) {
+      if (event.key === "Enter") tryLogin();
+    });
+
+    document.getElementById("logoutBtn").addEventListener("click", async function () {
+      await db.auth.signOut();
+      sessionStorage.removeItem(SELLER_KEY);
+      window.location.href = "Accueil_3_applis.html";
+    });
+
+    async function setupAuth() {
+      const sessionResult = await db.auth.getSession();
+      if (sessionResult.data && sessionResult.data.session) {
+        startApp();
+      } else {
+        authOverlay.style.display = "flex";
+        authEmail.focus();
+      }
+    }
+
+    fields.dateAchat.valueAsDate = new Date();
+
+    setupSeller();
+    renderProductsSelect();
+    render();
+    renderDeletions();
+    renderHistoryList();
+    setupAuth();
+  </script>
+</body>
+</html>
