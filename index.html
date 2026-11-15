@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pôle vente SNF - Accueil</title>
+  <style>
+    :root{
+      --mustard:#D4A017;
+      --mustard-dark:#b88408;
+      --mustard-light:#f3c94f;
+      --app-bg:#000000;
+      --card:#111111;
+      --card-alt:#161616;
+      --border:#2a2a2a;
+      --txt:#f3f3f3;
+      --muted:#b8b8b8;
+      --danger:#b91c1c;
+    }
+
+    *{box-sizing:border-box}
+
+    body{
+      margin:0;
+      min-height:100vh;
+      font-family:"Segoe UI", Arial, sans-serif;
+      background:
+        radial-gradient(circle at 20% -10%, rgba(212,160,23,0.08), transparent 40%),
+        radial-gradient(circle at 100% 10%, rgba(212,160,23,0.06), transparent 45%),
+        var(--app-bg);
+      color:var(--txt);
+      padding:24px;
+    }
+
+    .page{
+      max-width:1100px;
+      margin:0 auto;
+      display:grid;
+      gap:26px;
+    }
+
+    .header{
+      display:flex;
+      align-items:center;
+      gap:18px;
+      flex-wrap:wrap;
+    }
+
+    .logo-box{
+      width:78px;
+      height:78px;
+      border:2px solid var(--mustard-dark);
+      border-radius:16px;
+      background:#1a1a1a;
+      overflow:hidden;
+      flex-shrink:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .logo-box img{
+      width:100%;
+      height:100%;
+      object-fit:contain;
+    }
+
+    .brand h1{
+      margin:0;
+      font-size:1.5rem;
+      color:var(--mustard);
+      letter-spacing:.3px;
+    }
+
+    .brand p{
+      margin:4px 0 0;
+      color:var(--muted);
+      font-size:.92rem;
+    }
+
+    .hero{
+      text-align:center;
+      padding:26px 16px 6px;
+    }
+
+    .hero h2{
+      margin:0;
+      font-size:1.9rem;
+      color:#fff;
+    }
+
+    .hero span{
+      color:var(--mustard);
+    }
+
+    .hero p{
+      color:var(--muted);
+      max-width:620px;
+      margin:10px auto 0;
+      font-size:.98rem;
+      line-height:1.5;
+    }
+
+    .cards{
+      display:grid;
+      grid-template-columns:repeat(3, 1fr);
+      gap:18px;
+    }
+
+    .app-card{
+      position:relative;
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:22px 18px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      box-shadow:0 10px 26px rgba(0,0,0,.4);
+      transition:transform .15s ease, border-color .15s ease;
+    }
+
+    .app-card:hover{
+      transform:translateY(-4px);
+      border-color:var(--mustard-dark);
+    }
+
+    .app-icon{
+      width:52px;
+      height:52px;
+      border-radius:12px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:1.5rem;
+      background:linear-gradient(135deg, var(--mustard), var(--mustard-dark));
+      color:#111;
+      font-weight:800;
+    }
+
+    .app-card h3{
+      margin:4px 0 0;
+      color:#fff;
+      font-size:1.15rem;
+    }
+
+    .app-card p{
+      margin:0;
+      color:var(--muted);
+      font-size:.9rem;
+      line-height:1.45;
+      flex-grow:1;
+    }
+
+    .tag{
+      align-self:flex-start;
+      font-size:.72rem;
+      font-weight:700;
+      padding:3px 10px;
+      border-radius:999px;
+      letter-spacing:.4px;
+    }
+
+    .tag.free{
+      background:rgba(21,128,61,.18);
+      color:#4ade80;
+      border:1px solid rgba(74,222,128,.3);
+    }
+
+    .tag.admin{
+      background:rgba(212,160,23,.15);
+      color:var(--mustard-light);
+      border:1px solid rgba(212,160,23,.35);
+    }
+
+    .card-btn{
+      margin-top:6px;
+      border:none;
+      border-radius:10px;
+      padding:11px 14px;
+      font-weight:700;
+      font-size:.95rem;
+      cursor:pointer;
+      text-align:center;
+      text-decoration:none;
+      display:inline-block;
+    }
+
+    .card-btn.primary{
+      background:var(--mustard);
+      color:#111;
+    }
+
+    .card-btn.primary:hover{
+      background:var(--mustard-dark);
+      color:#fff;
+    }
+
+    .card-btn.locked{
+      background:#262626;
+      color:#eee;
+      border:1px solid #3a3a3a;
+    }
+
+    .card-btn.locked:hover{
+      border-color:var(--mustard);
+      color:var(--mustard-light);
+    }
+
+    .lock-icon{
+      position:absolute;
+      top:16px;
+      right:16px;
+      font-size:1rem;
+      color:var(--mustard);
+      opacity:.85;
+    }
+
+    footer{
+      text-align:center;
+      color:#666;
+      font-size:.8rem;
+      padding:10px 0 4px;
+    }
+
+    .overlay{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.85);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:9999;
+      padding:16px;
+    }
+
+    .overlay.active{
+      display:flex;
+    }
+
+    .modal{
+      width:min(92%, 380px);
+      background:#111;
+      border:1px solid #333;
+      border-radius:14px;
+      padding:22px;
+      box-shadow:0 20px 50px rgba(0,0,0,.5);
+    }
+
+    .modal.wide{
+      width:min(94%, 520px);
+      max-height:90vh;
+      overflow-y:auto;
+    }
+
+    .modal h3{
+      margin:0 0 4px;
+      color:var(--mustard);
+      font-size:1.2rem;
+    }
+
+    .modal p.sub{
+      margin:0 0 16px;
+      color:var(--muted);
+      font-size:.88rem;
+    }
+
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      margin-bottom:12px;
+    }
+
+    .field label{
+      font-size:.85rem;
+      color:#ddd;
+      font-weight:600;
+    }
+
+    .field input{
+      border:1px solid #333;
+      border-radius:8px;
+      padding:10px;
+      background:#1c1c1c;
+      color:#fff;
+      outline:none;
+      font-size:.95rem;
+    }
+
+    .field input:focus{
+      border-color:var(--mustard);
+      box-shadow:0 0 0 3px rgba(212,160,23,.2);
+    }
+
+    .modal-actions{
+      display:flex;
+      gap:10px;
+      margin-top:6px;
+    }
+
+    .btn{
+      flex:1;
+      border:none;
+      border-radius:8px;
+      padding:10px 12px;
+      font-weight:700;
+      cursor:pointer;
+      font-size:.92rem;
+    }
+
+    .btn-cancel{
+      background:#2a2a2a;
+      color:#ddd;
+    }
+
+    .btn-confirm{
+      background:var(--mustard);
+      color:#111;
+    }
+
+    .btn-confirm:hover{
+      background:var(--mustard-dark);
+      color:#fff;
+    }
+
+    .error-msg{
+      min-height:18px;
+      color:#f87171;
+      font-size:.85rem;
+      margin-top:8px;
+    }
+
+    .avatars{
+      display:grid;
+      grid-template-columns:repeat(3, 1fr);
+      gap:12px;
+      margin-bottom:14px;
+    }
+
+    .avatar-btn{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:10px;
+      padding:16px 8px;
+      border:1px solid #333;
+      border-radius:14px;
+      background:#1a1a1a;
+      color:#fff;
+      font-weight:700;
+      font-size:.95rem;
+      cursor:pointer;
+      transition:.2s ease;
+    }
+
+    .avatar-btn:hover{
+      border-color:var(--mustard);
+      transform:translateY(-3px);
+      background:rgba(212,160,23,.1);
+      color:var(--mustard-light);
+    }
+
+    .avatar-circle{
+      width:76px;
+      height:76px;
+      border-radius:50%;
+      overflow:hidden;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:2rem;
+      font-weight:800;
+      color:#111;
+      border:3px solid var(--mustard);
+      background:linear-gradient(135deg, var(--mustard-light), var(--mustard-dark));
+    }
+
+    .avatar-circle img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+
+    @media (max-width:850px){
+      .cards{
+        grid-template-columns:1fr;
+      }
+
+      .hero h2{
+        font-size:1.5rem;
+      }
+    }
+
+    @media (max-width:420px){
+      .avatars{
+        grid-template-columns:1fr;
+      }
+
+      .avatar-btn{
+        flex-direction:row;
+        justify-content:flex-start;
+        padding:10px 14px;
+      }
+
+      .avatar-circle{
+        width:56px;
+        height:56px;
+        font-size:1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page">
+    <div class="header">
+      <div class="logo-box">
+        <img src="logosopnaby.png" alt="Logo SNF" />
+      </div>
+
+      <div class="brand">
+        <h1>Pôle vente SNF</h1>
+        <p>Espace centralisé - commandes, stock et suivi des paiements</p>
+      </div>
+    </div>
+
+    <div class="hero">
+      <h2>Bienvenue sur l'espace <span>Pôle vente SNF</span></h2>
+      <p>Choisissez l'application dont vous avez besoin. La commande est accessible à tous,
+        les outils de gestion sont réservés aux administrateurs.</p>
+    </div>
+
+    <div class="cards">
+      <div class="app-card">
+        <div class="app-icon">🛒</div>
+        <span class="tag free">Accès libre</span>
+        <h3>Formulaire de commande</h3>
+        <p>Passez votre commande facilement : choisissez vos produits, quantités et laissez vos coordonnées.</p>
+        <a href="#" id="linkCommandeForm" class="card-btn primary">Accéder au formulaire</a>
+      </div>
+
+      <div class="app-card">
+        <span class="lock-icon">🔒</span>
+        <div class="app-icon">📦</div>
+        <span class="tag admin">Administrateurs</span>
+        <h3>Suivi du stock</h3>
+        <p>Gérez les quantités disponibles, ajoutez ou modifiez les produits et suivez les entrées/sorties.</p>
+        <button type="button" class="card-btn locked" data-target="linkStock">Se connecter</button>
+      </div>
+
+      <div class="app-card">
+        <span class="lock-icon">🔒</span>
+        <div class="app-icon">💰</div>
+        <span class="tag admin">Administrateurs</span>
+        <h3>Suivi des commandes</h3>
+        <p>Consultez les commandes, statuts de paiement (payé, impayé, en partie) et exportez les données.</p>
+        <button type="button" class="card-btn locked" data-target="linkCommandesSuivi">Se connecter</button>
+      </div>
+    </div>
+
+    <footer>© 2026 Pôle vente SNF - Espace interne</footer>
+  </div>
+
+  <div class="overlay" id="loginOverlay">
+    <div class="modal">
+      <h3>Connexion administrateur</h3>
+      <p class="sub">Veuillez entrer votre identifiant et votre mot de passe.</p>
+
+      <div class="field">
+        <label for="loginId">Identifiant</label>
+        <input id="loginId" type="text" placeholder="Votre ID" autocomplete="username" />
+      </div>
+
+      <div class="field">
+        <label for="loginPass">Mot de passe</label>
+        <input id="loginPass" type="password" placeholder="Votre mot de passe" autocomplete="current-password" />
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn btn-cancel" id="cancelLoginBtn">Annuler</button>
+        <button type="button" class="btn btn-confirm" id="confirmLoginBtn">Se connecter</button>
+      </div>
+
+      <p class="error-msg" id="loginError"></p>
+    </div>
+  </div>
+
+  <div class="overlay" id="sellerOverlay">
+    <div class="modal wide">
+      <h3>Qui êtes-vous ?</h3>
+      <p class="sub">Choisissez votre avatar. Votre nom sera enregistré à chaque action (ajout, modification, suppression).</p>
+
+      <div class="avatars" id="avatarsBox"></div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn btn-cancel" id="cancelSellerBtn">Annuler</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const LINKS = {
+      linkCommandeForm: "Formulaire_V2.html",
+      linkStock: "Gestion_stock.html",
+      linkCommandesSuivi: "Suivimpaye.html"
+    };
+
+    const ADMIN_USERS = [
+      { id: "admin", password: "Diay2026@123" }
+    ];
+
+    const SELLERS = [
+      { name: "Dior",     image: "avatars/dior.png" },
+      { name: "Mamadou",  image: "avatars/mamadou.png" },
+      { name: "Mouhamed", image: "avatars/mouhamed.png" },
+      { name: "Saer",     image: "avatars/saer.png" },
+      { name: "Awa",      image: "avatars/awa.png" },
+      { name: "Arame",    image: "avatars/arame.png" },
+      { name: "Ndiare",   image: "avatars/ndiare.png" },
+      { name: "Landing",  image: "avatars/landing.png" },
+      { name: "Dado",     image: "avatars/dado.png" },
+      { name: "Ro",       image: "avatars/ro.png" },
+      { name: "Sophie",   image: "avatars/sophie.png" },
+      { name: "Makhtar",  image: "avatars/makhtar.png" },
+      { name: "Zahra",    image: "avatars/zahra.png" },
+      { name: "Mansour",  image: "avatars/mansour.png" }
+    ];
+
+    const SELLER_KEY = "snf_seller_v1";
+
+    document.getElementById("linkCommandeForm").href = LINKS.linkCommandeForm;
+
+    const overlay = document.getElementById("loginOverlay");
+    const loginId = document.getElementById("loginId");
+    const loginPass = document.getElementById("loginPass");
+    const loginError = document.getElementById("loginError");
+    const cancelBtn = document.getElementById("cancelLoginBtn");
+    const confirmBtn = document.getElementById("confirmLoginBtn");
+
+    const sellerOverlay = document.getElementById("sellerOverlay");
+    const avatarsBox = document.getElementById("avatarsBox");
+    const cancelSellerBtn = document.getElementById("cancelSellerBtn");
+
+    let currentTarget = null;
+
+    function esc(value){
+      return String(value == null ? "" : value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function closeModal(){
+      overlay.classList.remove("active");
+    }
+
+    function closeSellerModal(){
+      sellerOverlay.classList.remove("active");
+      currentTarget = null;
+    }
+
+    document.querySelectorAll(".card-btn.locked").forEach(btn => {
+      btn.addEventListener("click", () => {
+        currentTarget = btn.dataset.target;
+
+        if(currentTarget === "linkCommandesSuivi"){
+          sessionStorage.removeItem(SELLER_KEY);
+          renderAvatars();
+          sellerOverlay.classList.add("active");
+          return;
+        }
+
+        loginId.value = "";
+        loginPass.value = "";
+        loginError.textContent = "";
+        overlay.classList.add("active");
+        loginId.focus();
+      });
+    });
+
+    cancelBtn.addEventListener("click", () => {
+      closeModal();
+      currentTarget = null;
+    });
+
+    overlay.addEventListener("click", (event) => {
+      if(event.target === overlay){
+        closeModal();
+        currentTarget = null;
+      }
+    });
+
+    cancelSellerBtn.addEventListener("click", closeSellerModal);
+
+    sellerOverlay.addEventListener("click", (event) => {
+      if(event.target === sellerOverlay) closeSellerModal();
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if(event.key === "Escape"){
+        closeModal();
+        closeSellerModal();
+      }
+    });
+
+    function renderAvatars(){
+      avatarsBox.innerHTML = "";
+
+      SELLERS.forEach(seller => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "avatar-btn";
+        btn.dataset.name = seller.name;
+        btn.innerHTML =
+          '<div class="avatar-circle">' +
+            '<img src="' + esc(seller.image) + '" alt="' + esc(seller.name) + '" />' +
+          '</div>' +
+          '<span>' + esc(seller.name) + '</span>';
+
+        const img = btn.querySelector("img");
+        img.addEventListener("error", () => {
+          img.parentElement.textContent = seller.name.charAt(0).toUpperCase();
+        });
+
+        btn.addEventListener("click", () => chooseSeller(seller.name));
+        avatarsBox.appendChild(btn);
+      });
+    }
+
+    function chooseSeller(name){
+      sessionStorage.setItem(SELLER_KEY, name);
+
+      const url = LINKS[currentTarget];
+      closeSellerModal();
+
+      if(url){
+        window.location.href = url;
+      }
+    }
+
+    function attemptLogin(){
+      const id = loginId.value.trim();
+      const pass = loginPass.value;
+
+      const match = ADMIN_USERS.find(user => user.id === id && user.password === pass);
+
+      if(!match){
+        loginError.textContent = "Identifiant ou mot de passe incorrect.";
+        return;
+      }
+
+      const url = LINKS[currentTarget];
+      closeModal();
+      currentTarget = null;
+
+      if(url){
+        window.location.href = url;
+      }
+    }
+
+    confirmBtn.addEventListener("click", attemptLogin);
+
+    loginPass.addEventListener("keydown", (event) => {
+      if(event.key === "Enter") attemptLogin();
+    });
+  </script>
+
+</body>
+</html>
